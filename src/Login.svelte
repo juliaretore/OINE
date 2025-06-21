@@ -29,7 +29,14 @@
             if (response.ok) {
                 localStorage.setItem("usuarioLogado", JSON.stringify(data.user));
                 // Redirecionar para a página de home do aluno
-                navigate('/home-aluno');
+                if (data.user.tipo === 'professor') {
+                    navigate('/home-professor');
+                } else if (data.user.tipo === 'aluno') {
+                    navigate('/home-aluno');
+                } else {
+                    errorMessage = 'Tipo de usuário desconhecido.';
+                    return;
+                }
             } else {
                 errorMessage = data.message || 'Erro ao fazer login.';
             }

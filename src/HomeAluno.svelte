@@ -1,5 +1,6 @@
 <script>
     import { onMount } from 'svelte';
+    import { Link } from "svelte-routing";
 
     export async function fetchTentativas(alunoId) {
         const response = await fetch(`http://localhost:3000/api/tentativas?aluno=${alunoId}`);
@@ -12,7 +13,6 @@
         if (!response.ok) throw new Error('Erro ao buscar turma');
         return await response.json();
     }
-
 
     const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado"));
     let tentativas = [];
@@ -134,6 +134,11 @@
 </style>
 
 <div>
+    <Link to="/adicao" style="color: white; text-decoration: none;" class="btn btn-success">Adição</Link>
+    <Link to="/subtracao" style="color: white; text-decoration: none;" class="btn btn-success">Subtração</Link>
+    <Link to="/multiplicacao" style="color: white; text-decoration: none;" class="btn btn-success">Multiplicação</Link>
+    <Link to="/divisao" style="color: white; text-decoration: none;" class="btn btn-success">Divisão</Link>
+
         <h1>Olá, {usuarioLogado.nome}</h1>
         <p>Turma: {turma ? turma.nome : "Não matriculado em nenhuma turma"}</p>
         <p>Quantidade de Jogos: {quantidadeJogos}</p>

@@ -93,9 +93,9 @@ app.post("/api/usuario", async (req, res) => {
 });
 
 app.post("/api/turma", async (req, res) => {
-    const { serie, idProfessor, alunos } = req.body;
+    const { serie, idProfessor, alunos, nome } = req.body;
 
-    const turma = new Turma({ serie, idProfessor, alunos });
+    const turma = new Turma({ serie, idProfessor, alunos, nome });
     await turma.save();
     res.status(201).json({ message: "Turma criada", turma });
 });

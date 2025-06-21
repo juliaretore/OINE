@@ -1,0 +1,128 @@
+[{
+  "_id": {
+    "$oid": "6851fabd971a6203db27c0d0"
+  },
+  "aluno": {
+    "$oid": "6851bb5ce78bbe1bc0f8fcde"
+  },
+  "questaoDiaria": {
+    "$oid": "6851bc1be78bbe1bc0f8fce2"
+  },
+  "acertos": 3,
+  "dataHora": {
+    "$date": "2025-06-17T14:00:00.000Z"
+  },
+  "tipo": 1
+},
+{
+  "_id": {
+    "$oid": "6856a2418ce35e85f7c41883"
+  },
+  "aluno": {
+    "$oid": "6851bb5ce78bbe1bc0f8fcde"
+  },
+  "questaoDiaria": {
+    "$oid": "6851bc1be78bbe1bc0f8fce2"
+  },
+  "acertos": 3,
+  "dataHora": {
+    "$date": "2025-06-17T18:27:00.000Z"
+  },
+  "tipo": 2
+},
+{
+  "_id": {
+    "$oid": "6856a24d8ce35e85f7c41885"
+  },
+  "aluno": {
+    "$oid": "6851bb5ce78bbe1bc0f8fcde"
+  },
+  "questaoDiaria": {
+    "$oid": "6851bc1be78bbe1bc0f8fce2"
+  },
+  "acertos": 3,
+  "dataHora": {
+    "$date": "2025-06-17T18:34:00.000Z"
+  },
+  "tipo": 3
+},
+{
+  "_id": {
+    "$oid": "6856a25f8ce35e85f7c41887"
+  },
+  "aluno": {
+    "$oid": "6851bb5ce78bbe1bc0f8fcde"
+  },
+  "questaoDiaria": {
+    "$oid": "6851bc1be78bbe1bc0f8fce2"
+  },
+  "acertos": 3,
+  "dataHora": {
+    "$date": "2025-06-17T18:53:20.000Z"
+  },
+  "tipo": 4
+},
+{
+  "_id": {
+    "$oid": "6856a69a8ce35e85f7c41891"
+  },
+  "aluno": {
+    "$oid": "6851bb5ce78bbe1bc0f8fcde"
+  },
+  "questaoDiaria": {
+    "$oid": "6856a3f88ce35e85f7c4188c"
+  },
+  "acertos": 3,
+  "dataHora": {
+    "$date": "2025-06-18T14:00:00.000Z"
+  },
+  "tipo": 1
+},
+{
+  "_id": {
+    "$oid": "6856a6a68ce35e85f7c41893"
+  },
+  "aluno": {
+    "$oid": "6851bb5ce78bbe1bc0f8fcde"
+  },
+  "questaoDiaria": {
+    "$oid": "6856a3f88ce35e85f7c4188c"
+  },
+  "acertos": 3,
+  "dataHora": {
+    "$date": "2025-06-18T14:10:00.000Z"
+  },
+  "tipo": 2
+},
+{
+  "_id": {
+    "$oid": "6856a6b68ce35e85f7c41895"
+  },
+  "aluno": {
+    "$oid": "6851bb5ce78bbe1bc0f8fcde"
+  },
+  "questaoDiaria": {
+    "$oid": "6856a3f88ce35e85f7c4188c"
+  },
+  "acertos": 3,
+  "dataHora": {
+    "$date": "2025-06-18T14:20:00.000Z"
+  },
+  "tipo": 3
+},
+{
+  "_id": {
+    "$oid": "6856a6e48ce35e85f7c41897"
+  },
+  "aluno": {
+    "$oid": "6851bb5ce78bbe1bc0f8fcde"
+  },
+  "questaoDiaria": {
+    "$oid": "6856a3f88ce35e85f7c4188c"
+  },
+  "acertos": 2,
+  "dataHora": {
+    "$date": "2025-06-18T14:25:00.000Z"
+  },
+  "tipo": 4
+}]

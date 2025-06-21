@@ -1,0 +1,23 @@
+[
+  {
+    "email": "professor1@email.com",
+    "senha": "123456",
+    "nome": "Professor João",
+    "tipo": "professor",
+    "cpf": "123.456.789-00"
+  },
+  {
+    "email": "aluno1@email.com",
+    "senha": "123456",
+    "nome": "Aluno Maria",
+    "tipo": "aluno",
+    "matricula": "2022001"
+  },
+  {
+    "email": "aluno2@email.com",
+    "senha": "123456",
+    "nome": "Aluno José",
+    "tipo": "aluno",
+    "matricula": "2022002"
+  }
+]

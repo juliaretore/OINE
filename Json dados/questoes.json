@@ -1,0 +1,96 @@
+[{
+  "_id": {
+    "$oid": "6851bc1be78bbe1bc0f8fce2"
+  },
+  "data": {
+    "$date": "2025-06-17T00:00:00.000Z"
+  },
+  "somaNumeradores": [
+    2,
+    3,
+    4
+  ],
+  "somaDenominadores": [
+    5,
+    6,
+    5
+  ],
+  "subNumeradores": [
+    4,
+    6,
+    3
+  ],
+  "subDenominadores": [
+    2,
+    3,
+    3
+  ],
+  "multNumeradores": [
+    1,
+    2,
+    3
+  ],
+  "multDenominadores": [
+    3,
+    4,
+    6
+  ],
+  "divNumeradores": [
+    2,
+    1,
+    4
+  ],
+  "divDenominadores": [
+    4,
+    1,
+    3
+  ]
+},
+{
+  "_id": {
+    "$oid": "6856a3f88ce35e85f7c4188c"
+  },
+  "data": {
+    "$date": "2025-06-18T00:00:00.000Z"
+  },
+  "somaNumeradores": [
+    4,
+    5,
+    2
+  ],
+  "somaDenominadores": [
+    3,
+    4,
+    2
+  ],
+  "subNumeradores": [
+    4,
+    2,
+    9
+  ],
+  "subDenominadores": [
+    1,
+    5,
+    3
+  ],
+  "multNumeradores": [
+    5,
+    3,
+    9
+  ],
+  "multDenominadores": [
+    4,
+    3,
+    4
+  ],
+  "divNumeradores": [
+    2,
+    4,
+    8
+  ],
+  "divDenominadores": [
+    4,
+    1,
+    3
+  ]
+}]

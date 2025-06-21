@@ -1,0 +1,11 @@
+
+[
+  {
+    "serie": 6,
+    "idProfessor": { "$oid": "6851bb5ce78bbe1bc0f8fcdd" },
+    "alunos": [
+      { "$oid": "6851bb5ce78bbe1bc0f8fcde" },
+      { "$oid": "6851bb5ce78bbe1bc0f8fcdf" }
+    ]
+  }
+]

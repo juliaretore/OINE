@@ -2,15 +2,15 @@
     import { Router, Route, Link } from 'svelte-routing';
     import '../public/global.css';
 
-    import Home from './Home.svelte';
-    import Login from './Login.svelte';
-	import NovoCadastro from './NovoCadastro.svelte';
-    import HomeAluno from './HomeAluno.svelte';
-    import HomeProfessor from './HomeProfessor.svelte';
-    import Adicao from './Adicao.svelte';
-    import Subtracao from './Subtracao.svelte';
-    import Multiplicacao from './Multiplicacao.svelte';
-    import Divisao from './Divisao.svelte';
+    import Home from './views/Home.svelte';
+    import Login from './views/Login.svelte';
+	import NovoCadastro from './views/NovoCadastro.svelte';
+    import HomeAluno from './views/HomeAluno.svelte';
+    import HomeProfessor from './views/HomeProfessor.svelte';
+    import Adicao from './views/Adicao.svelte';
+    import Subtracao from './views/Subtracao.svelte';
+    import Multiplicacao from './views/Multiplicacao.svelte';
+    import Divisao from './views/Divisao.svelte';
 
 
 </script>

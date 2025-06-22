@@ -1,5 +1,6 @@
 <script>
     import { onMount } from 'svelte';
+    import simplificarFracao, {carregarTurma, carregarQuestao, carregarTentativas, salvarTentativa } from '../controllers/QuestoesDiariasController.js';
 
     const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado"));
     let turma = null;
@@ -9,52 +10,31 @@
     let resultados = [];
 
     onMount(async () => {
-        await carregarTurma();
-        await carregarQuestao();
-        await carregarTentativas();
+        turma = await carregarTurma(usuarioLogado);
+        questao = await carregarQuestao();
+        tentativas = await carregarTentativas(2, usuarioLogado, questao);
         iniciarRespostas();
     });
 
-    async function carregarTurma() {
-        const res = await fetch(`http://localhost:3000/api/turma-do-usuario/${usuarioLogado._id}`);
-        turma = await res.json();
-    }
-
-    async function carregarQuestao() {
-        const res = await fetch('http://localhost:3000/api/questaoDiaria');
-        const questoes = await res.json();
-        questao = questoes[questoes.length - 1];
-    }
-
     function iniciarRespostas() {
         resultados = [
-            { num1: questao.multNumeradores[0], den1: questao.multDenominadores[0],
-              num2: questao.multNumeradores[1], den2: questao.multDenominadores[1],
+            { num1: questao.subNumeradores[0], den1: questao.subDenominadores[0],
+              num2: questao.subNumeradores[1], den2: questao.subDenominadores[1],
               respNum: '', respDen: '', correto: null },
 
-            { num1: questao.multNumeradores[2], den1: questao.multDenominadores[2],
-              num2: questao.multNumeradores[0], den2: questao.multDenominadores[0],
+            { num1: questao.subNumeradores[2], den1: questao.subDenominadores[2],
+              num2: questao.subNumeradores[0], den2: questao.subDenominadores[0],
               respNum: '', respDen: '', correto: null },
 
-            { num1: questao.multNumeradores[1], den1: questao.multDenominadores[1],
-              num2: questao.multNumeradores[2], den2: questao.multDenominadores[2],
+            { num1: questao.subNumeradores[1], den1: questao.subDenominadores[1],
+              num2: questao.subNumeradores[2], den2: questao.subDenominadores[2],
               respNum: '', respDen: '', correto: null }
         ];
     }
 
-    function simplificarFracao(numerador, denominador) {
-        const mdc = (a, b) => b === 0 ? a : mdc(b, a % b);
-        const divisor = mdc(Math.abs(numerador), Math.abs(denominador));
-
-        return {
-            num: numerador / divisor,
-            den: denominador / divisor
-        };
-    }
-
     function conferir() {
         resultados.forEach(r => {
-            const resultadoNum = r.num1 * r.num2;
+            const resultadoNum = r.num1 * r.den2 - r.num2 * r.den1;
             const resultadoDen = r.den1 * r.den2;
 
             const resultadoSimplificado = simplificarFracao(resultadoNum, resultadoDen);
@@ -65,32 +45,12 @@
                 respostaSimplificada.den === resultadoSimplificado.den
             );
         });
-
         const acertos = resultados.filter(r => r.correto).length;
-        salvarTentativa(acertos);
+        salvarTentativa(acertos, 2, questao, usuarioLogado);
         tentativas += 1;
         resultados = [...resultados];
     }
 
-
-    async function salvarTentativa(acertos) {
-        await fetch('http://localhost:3000/api/tentativa', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                aluno: usuarioLogado._id,
-                questaoDiaria: questao._id,
-                acertos: acertos,
-                dataHora: new Date(),
-                tipo: 3 // tipo 3 = multiplicação
-            })
-        });
-    }
-    async function carregarTentativas() {
-        const res = await fetch(`http://localhost:3000/api/tentativas?aluno=${usuarioLogado._id}&questao=${questao._id}`);
-        const todas = await res.json();
-        tentativas = todas.filter(t => t.tipo === 3).length;
-    }
 </script>
 <style>
    input {
@@ -127,7 +87,7 @@
 
     {#each resultados as r, index}
     <div class="questao">
-        <p>{r.num1}/{r.den1} * {r.num2}/{r.den2} =</p>
+        <p>{r.num1}/{r.den1} - {r.num2}/{r.den2} =</p>
         <div class="resposta">
             <input 
                 type="number" 

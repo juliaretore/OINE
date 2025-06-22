@@ -1,56 +1,19 @@
 import express from 'express';
 import mongoose from 'mongoose';
-import cors from 'cors';
 const app = express();
 app.use(express.json());
-app.use(cors());
+
+import Usuario from '../src/models/Usuario.js';
+import Turma from '../src/models/Turma.js';
+import QuestaoDiaria from '../src/models/QuestaoDiaria.js';
+import Tentativa from '../src/models/Tentativa.js';
+
 
 // Configurações do MongoDB
 const MONGO_URI = "mongodb://localhost:27017/Fracionando"; 
 mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log("Conectado ao MongoDB"))
   .catch((err) => console.error("Erro ao conectar ao MongoDB:", err));
-
-// Esquema do Usuário
-const userSchema = new mongoose.Schema({
-    nome: String,
-    email: String,
-    senha: String,
-    tipo: String, // 'professor' ou 'aluno'
-    cpf: String,
-    matricula: String // só para alunos
-}, { collection: 'usuario' });
-export const Usuario = mongoose.model("Usuario", userSchema);
-
-const turmaSchema = new mongoose.Schema({
-    serie: Number,
-    idProfessor: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' },
-    alunos: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' }],
-    nome: String
-}, { collection: 'turma' });
-export const Turma = mongoose.model("Turma", turmaSchema);
-
-const questoesSchema = new mongoose.Schema({
-    data: Date,
-    somaNumeradores: [Number, Number,  Number],
-    somaDenominadores: [Number, Number,  Number],
-    subNumeradores: [Number, Number,  Number],
-    subDenominadores: [Number, Number,  Number],
-    multNumeradores: [Number, Number,  Number],
-    multDenominadores: [Number, Number,  Number],
-    divNumeradores: [Number, Number,  Number],
-    divDenominadores: [Number, Number,  Number],
-}, { collection: 'questoes' });
-export const QuestaoDiaria = mongoose.model("QuestaoDiaria", questoesSchema);
-
-const tentativaSchema = new mongoose.Schema({
-    aluno: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' },
-    questaoDiaria: { type: mongoose.Schema.Types.ObjectId, ref: 'QuestaoDiaria' },
-    acertos: Number,
-    dataHora: Date,
-    tipo: Number // tipo de tentativa, se quiser categorizar
-}, { collection: 'tentativa' });
-export const Tentativa = mongoose.model("Tentativa", tentativaSchema);
 
 app.post("/api/login", async (req, res) => {
     const { email, senha } = req.body;

@@ -7,11 +7,11 @@
 	import NovoCadastro from './views/NovoCadastro.svelte';
     import HomeAluno from './views/HomeAluno.svelte';
     import HomeProfessor from './views/HomeProfessor.svelte';
-    import Adicao from './views/Adicao.svelte';
-    import Subtracao from './views/Subtracao.svelte';
-    import Multiplicacao from './views/Multiplicacao.svelte';
-    import Divisao from './views/Divisao.svelte';
-
+    import Adicao from './views/questoes/Adicao.svelte';
+    import Subtracao from './views/questoes/Subtracao.svelte';
+    import Multiplicacao from './views/questoes/Multiplicacao.svelte';
+    import Divisao from './views/questoes/Divisao.svelte';
+    import Feedback from './views/questoes/Feedback.svelte';
 
 </script>
 
@@ -25,4 +25,5 @@
     <Route path="/subtracao" component={Subtracao} />
     <Route path="/multiplicacao" component={Multiplicacao} />
     <Route path="/divisao" component={Divisao} />
+    <Route path="/feedback" component={Feedback} />
 </Router>

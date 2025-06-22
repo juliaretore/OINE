@@ -1,4 +1,4 @@
-export default function simplificarFracao(numerador, denominador) {
+export function simplificarFracao(numerador, denominador) {
     const mdc = (a, b) => b === 0 ? a : mdc(b, a % b);
     const divisor = mdc(Math.abs(numerador), Math.abs(denominador));
 
@@ -22,7 +22,13 @@ export async function carregarQuestao() {
 export async function carregarTentativas(tipo, usuarioLogado, questao) {
     const res = await fetch(`http://localhost:3000/api/tentativas?aluno=${usuarioLogado._id}&questao=${questao._id}`);
     const todas = await res.json();
-    return todas.filter(t => t.tipo === tipo).length;
+    return todas.filter(t => t.tipo === tipo);
+}
+
+export async function carregarTentativasPorUsuarioTipo(tipo, usuarioLogado) {
+    const res = await fetch(`http://localhost:3000/api/tentativas?aluno=${usuarioLogado._id}`);
+    const todas = await res.json();
+    return todas.filter(t => t.tipo === tipo);
 }
 
 export async function salvarTentativa(acertos, tipo, questao, usuarioLogado) {

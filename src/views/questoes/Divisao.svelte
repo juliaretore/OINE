@@ -1,19 +1,27 @@
 <script>
     import { onMount } from 'svelte';
-    import simplificarFracao, {carregarTurma, carregarQuestao, carregarTentativas, salvarTentativa } from '../controllers/QuestoesDiariasController.js';
+    import {simplificarFracao, carregarTurma, carregarQuestao, carregarTentativas, salvarTentativa, carregarTentativasPorUsuarioTipo } from '../../controllers/QuestoesDiariasController.js';
+    import Feedback from './Feedback.svelte';
 
     const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado"));
     let turma = null;
     let questao = null;
-    let tentativas = 0;
+    let tentativas = [];
     let resultados = [];
+    let todasAsTentativas = [];
+    let concluido = false;
 
     onMount(async () => {
         turma = await carregarTurma(usuarioLogado);
         questao = await carregarQuestao();
         tentativas = await carregarTentativas(4, usuarioLogado, questao);
+        todasAsTentativas = await carregarTentativasPorUsuarioTipo(4, usuarioLogado);
+        concluido = tentativas.filter(t => t.acertos === 3).length > 0;
         iniciarRespostas();
     });
+
+    $: console.log('Resultados atualizados:', resultados);
+    $: console.log('Concluído:', concluido);
 
     function iniciarRespostas() {
         resultados = [
@@ -46,28 +54,11 @@
         });
 
         const acertos = resultados.filter(r => r.correto).length;
+        if(acertos === 3)  concluido = true;
         salvarTentativa(acertos, 4, questao, usuarioLogado);
         tentativas += 1;
         resultados = [...resultados];
     }
-
-    let tempoRestante = '';
-
-    function atualizarCronometro() {
-        const agora = new Date();
-        const proximoDia = new Date();
-        proximoDia.setHours(24, 0, 0, 0); // meia-noite de hoje para amanhã
-
-        const diff = proximoDia - agora;
-
-        const horas = Math.floor(diff / (1000 * 60 * 60));
-        const minutos = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const segundos = Math.floor((diff % (1000 * 60)) / 1000);
-
-        tempoRestante = `${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}:${segundos.toString().padStart(2, '0')}`;
-    }
-
-    setInterval(atualizarCronometro, 1000);
 
 </script>
 <style>
@@ -97,39 +88,44 @@
         background-color: #ffebee;
     }
 </style>
-
 <div>
     <p>Turma: {turma ? turma.nome : 'Carregando...'}</p>
-    <p>Tentativas: {tentativas}</p>
+    <p>Tentativas: {tentativas.length}</p>
 </div>
 
+{#if concluido}
+     <Feedback {tentativas} {todasAsTentativas} />
+{:else}
     {#each resultados as r, index}
-    <div class="questao">
-        <p>{r.num1}/{r.den1} ÷ {r.num2}/{r.den2} =</p>
-        <div class="resposta">
-            <input 
-                type="number" 
-                bind:value={r.respNum} 
-                placeholder="Numerador"
-                class:r-correto={r.correto == true}
-                class:r-incorreto={r.correto == false}
-            />
-            <span>/</span>
-            <input 
-                type="number" 
-                bind:value={r.respDen} 
-                placeholder="Denominador"
-                class:r-correto={r.correto == true}
-                class:r-incorreto={r.correto == false}
-            />
-            {#if r.correto == true}
-                ✅
-            {:else if r.correto == false}
-                ❌
-            {/if}
+        <div class="questao">
+            <p>{r.num1}/{r.den1} ÷ {r.num2}/{r.den2} =</p>
+            <div class="resposta">
+                <input 
+                    type="number" 
+                    bind:value={r.respNum} 
+                    placeholder="Numerador"
+                    class:r-correto={r.correto == true}
+                    class:r-incorreto={r.correto == false}
+                />
+                <span>/</span>
+                <input 
+                    type="number" 
+                    bind:value={r.respDen} 
+                    placeholder="Denominador"
+                    class:r-correto={r.correto == true}
+                    class:r-incorreto={r.correto == false}
+                />
+                {#if r.correto == true}
+                    ✅
+                {:else if r.correto == false}
+                    ❌
+                {/if}
+            </div>
         </div>
+    {/each}
+
+
+    <div>
+        <button on:click={conferir}>Tentar</button>
     </div>
-{/each}
-
-
-<button on:click={conferir}>Conferir Respostas</button>
+{/if}

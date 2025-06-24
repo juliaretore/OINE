@@ -12,6 +12,7 @@
     import Multiplicacao from './views/questoes/Multiplicacao.svelte';
     import Divisao from './views/questoes/Divisao.svelte';
     import Feedback from './views/questoes/Feedback.svelte';
+    import DesafiosDiarios from './views/DesafiosDiarios.svelte';
 
 </script>
 
@@ -26,4 +27,5 @@
     <Route path="/multiplicacao" component={Multiplicacao} />
     <Route path="/divisao" component={Divisao} />
     <Route path="/feedback" component={Feedback} />
+    <Route path="/desafios-diarios" component={DesafiosDiarios} />
 </Router>

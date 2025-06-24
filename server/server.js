@@ -2,6 +2,11 @@ import express from 'express';
 import mongoose from 'mongoose';
 const app = express();
 app.use(express.json());
+import cors from 'cors';
+app.use(cors({
+    origin: 'http://localhost:8080',
+    credentials: true
+}));
 
 import Usuario from '../src/models/Usuario.js';
 import Turma from '../src/models/Turma.js';

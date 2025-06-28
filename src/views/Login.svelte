@@ -1,19 +1,23 @@
 <script>
     import { navigate } from 'svelte-routing';
+    import { slide } from 'svelte/transition';
     
     let email = '';
     let senha = '';
     let manterConectado = false;
     let errorMessage = '';
     let isLoading = false;
+    let showNotification = false;
+    let showSuccess = false;
 
     async function handleLogin(e) {
         e.preventDefault();
         isLoading = true;
         errorMessage = '';
+        showNotification = false;
+        showSuccess = false;
         
         try {
-            // requisição API de login
             const response = await fetch('http://localhost:3000/api/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -22,33 +26,46 @@
 
             const data = await response.json();
 
-            // login bem-sucedido
             if (response.ok) {
-                // Salva os dados do usuário no localStorage
                 localStorage.setItem("usuarioLogado", JSON.stringify(data.user));
+                showSuccess = true;
+                showError('✅ Login realizado com sucesso!', 'success');
                 
-                // login por tipo de usuário
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
                 if (data.user.tipo === 'professor') {
                     navigate('/home-professor');
                 } else if (data.user.tipo === 'aluno') {
                     navigate('/home-aluno');
                 } else {
-                    errorMessage = 'Tipo de usuário desconhecido.';
+                    showError('Tipo de usuário desconhecido.');
                 }
             } else {
-                errorMessage = data.message || 'Erro ao fazer login. Verifique suas credenciais.';
+                showError(data.message || 'Erro ao fazer login. Verifique suas credenciais.');
             }
         } catch (err) {
             console.error('Erro no login:', err);
-            errorMessage = 'Erro ao conectar com o servidor. Tente novamente mais tarde.';
+            showError('Erro ao conectar com o servidor. Tente novamente mais tarde.');
         } finally {
             isLoading = false;
         }
     }
+
+    function showError(message, type = 'error') {
+        errorMessage = message;
+        showNotification = true;
+        
+        const timer = setTimeout(() => {
+            if (showNotification) {
+                showNotification = false;
+            }
+        }, type === 'success' ? 1500 : 5000);
+
+        return () => clearTimeout(timer);
+    }
 </script>
 
 <div class="login-container">
-    <!-- Barra superior com logo clicável -->
     <header class="app-header">
         <div class="logo-container" on:click={() => navigate('/')} style="cursor: pointer;">
             <img src="/images/fracionando.png" alt="Logo Fracionando" class="logo" />
@@ -59,14 +76,20 @@
         </div>
     </header>
 
+    {#if showNotification}
+        <div class="notification-container">
+            <div transition:slide={{ duration: 300 }}
+                 class="notification {errorMessage.includes('✅') ? 'success' : 'error'}">
+                <span class="message-text">{errorMessage}</span>
+                <button class="close-btn" on:click={() => showNotification = false}>
+                    <span class="close-icon">×</span>
+                </button>
+            </div>
+        </div>
+    {/if}
+
     <main class="login-content">
         <h1 class="login-title">Login</h1>
-        
-        {#if errorMessage}
-            <div class:error-message={errorMessage.includes('❌')} class:success-message={errorMessage.includes('✅')}>
-                {errorMessage}
-            </div>
-        {/if}
         
         <form on:submit|preventDefault={handleLogin}>
             <div class="form-group">
@@ -103,7 +126,11 @@
             </div>
             
             <button type="submit" class="submit-btn" disabled={isLoading}>
-                {isLoading ? 'Carregando...' : 'Login'}
+                {#if isLoading}
+                    <span class="spinner"></span> Carregando...
+                {:else}
+                    Login
+                {/if}
             </button>
             
             <div class="login-links">
@@ -126,7 +153,6 @@
         font-family: 'Baloo 2', sans-serif;
     }
     
-    /* principal */
     .login-container {
         width: 100%;
         min-height: 100vh;
@@ -261,6 +287,10 @@
         cursor: pointer;
         margin: 1.5rem 0;
         transition: background-color 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
     }
     
     .submit-btn:hover {
@@ -272,7 +302,19 @@
         cursor: not-allowed;
     }
     
-    /* links */
+    .spinner {
+        width: 18px;
+        height: 18px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: white;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
     .login-links {
         display: flex;
         justify-content: space-between;
@@ -291,27 +333,83 @@
         text-decoration: underline;
     }
     
-    .error-message {
-        color: #e74c3c;
-        background-color: #fadbd8;
-        padding: 1rem;
-        border-radius: 4px;
-        margin-bottom: 1.5rem;
-        text-align: center;
-        font-size: 1.05rem;
+    .notification {
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        padding: 0.75rem 1.25rem;
+        border-radius: 8px;
+        color: white;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+        max-width: 350px;
+        opacity: 0.96;
+        backdrop-filter: blur(3px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
     }
 
-    .success-message {
-        color: #27ae60;
-        background-color: #d5f5e3;
-        padding: 1rem;
-        border-radius: 4px;
-        margin-bottom: 1.5rem;
-        text-align: center;
-        font-size: 1.05rem;
+    .message-text {
+        flex-grow: 1;
+        padding-right: 1rem;
     }
 
-    /* responsividade */
+    .close-btn {
+        background: rgba(255, 255, 255, 0.15);
+        border: none;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .close-btn:hover {
+        background: rgba(255, 255, 255, 0.25);
+    }
+
+    .close-icon {
+        font-size: 1.1rem;
+        line-height: 1;
+        margin-top: -1px;
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 0.96;
+        }
+    }
+
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 0.96;
+        }
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+
+    .notification.error {
+        background: rgba(231, 76, 60, 0.92);
+    }
+
+    .notification.success {
+        background: rgba(39, 174, 96, 0.92);
+    }
+
     @media (max-width: 768px) {
         .login-content {
             padding: 2rem;
@@ -329,6 +427,12 @@
         
         .app-header {
             padding: 1rem;
+        }
+        
+        .notification {
+            top: 80px;
+            right: 10px;
+            max-width: calc(100% - 20px);
         }
     }
 </style>

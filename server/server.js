@@ -13,7 +13,6 @@ import Turma from '../src/models/Turma.js';
 import QuestaoDiaria from '../src/models/QuestaoDiaria.js';
 import Tentativa from '../src/models/Tentativa.js';
 
-
 // Configurações do MongoDB
 const MONGO_URI = "mongodb://localhost:27017/Fracionando"; 
 mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -106,7 +105,6 @@ app.get("/api/tentativas", async (req, res) => {
     res.json(tentativas);
 });
 
-
 app.get("/api/turma-do-usuario/:usuarioId", async (req, res) => {
     const { usuarioId } = req.params;
 
@@ -126,6 +124,42 @@ app.get("/api/turma-do-usuario/:usuarioId", async (req, res) => {
     }
 });
 
+// GET /api/progresso-turma/:turmaId
+app.get("/api/progresso-turma/:turmaId", async (req, res) => {
+    const { turmaId } = req.params;
+    try {
+        const turma = await Turma.findById(turmaId).populate('alunos', 'nome');
+        if (!turma) return res.status(404).json({ message: "Turma não encontrada" });
+        const alunos = turma.alunos;
+        console.log("Calculando progresso para a turma:", turma.nome);
+        
+
+        const progresso = await Promise.all(alunos.map(async (aluno) => {
+            const tentativas = await Tentativa.find({ aluno: aluno._id });
+
+            const frequenciaDias = new Set(
+                tentativas.map(t => new Date(t.data).toISOString().split("T")[0])
+            );
+
+            const pontuacaoTotal = tentativas.reduce((acc, t) => acc + (t.pontuacao || 0), 0);
+
+            return {
+                nome: aluno.nome,
+                frequencia: frequenciaDias.size,
+                pontuacao: pontuacaoTotal,
+            };
+        }));
+
+        res.json({
+            turma: turma.nome,
+            quantidadeAlunos: alunos.length,
+            progresso: progresso.sort((a, b) => b.frequencia - a.frequencia), // ordenado por frequência (opcional)
+        });
+    } catch (err) {
+        console.error("Erro ao calcular progresso:", err);
+        res.status(500).json({ message: "Erro ao calcular progresso da turma" });
+    }
+});
 
 
 // Iniciar o servidor

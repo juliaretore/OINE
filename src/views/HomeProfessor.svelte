@@ -80,6 +80,7 @@
 </script>
 
 <Link to="/desafios-diarios" style="color: white; text-decoration: none;" class="btn btn-success">Desafio Diário</Link>
+<Link to="/dashboard" style="color: white; text-decoration: none;" class="btn btn-success">Dashboard</Link>
 
 <h1>Bem-vindo, {usuarioLogado.nome}</h1>
 <h2>Turmas: {quantidadeTurmas}</h2>

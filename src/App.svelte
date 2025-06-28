@@ -13,6 +13,7 @@
     import Divisao from './views/questoes/Divisao.svelte';
     import Feedback from './views/questoes/Feedback.svelte';
     import DesafiosDiarios from './views/DesafiosDiarios.svelte';
+    import Dashboard from './views/Dashboard.svelte';
 
 </script>
 
@@ -28,4 +29,5 @@
     <Route path="/divisao" component={Divisao} />
     <Route path="/feedback" component={Feedback} />
     <Route path="/desafios-diarios" component={DesafiosDiarios} />
+    <Route path="/dashboard" component={Dashboard} />
 </Router>

@@ -210,7 +210,6 @@
     </main>
 </div>
 <style>
-    /* CORREÇÕES PRINCIPAIS */
     :global(body, html) {
         margin: 0;
         padding: 0;
@@ -218,13 +217,12 @@
     }
 
     .login-container {
-        min-height: 100vh; /* Garante que o container ocupe pelo menos a tela toda */
+        min-height: 100vh;
         background: #EBF4F2;
         display: flex;
         flex-direction: column;
     }
 
-    /* FORMULÁRIO MAIS LARGO E COM ESPAÇO NO FINAL */
     .login-content {
         max-width: 700px;
         width: 90%;
@@ -234,10 +232,9 @@
         border-radius: 8px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         flex-grow: 1;
-        margin-bottom: 3rem; /* Espaço extra no final */
+        margin-bottom: 3rem;
     }
 
-    /* RESTANTE DO CSS (MANTIDO IGUAL) */
     .app-header {
         display: flex;
         justify-content: space-between;
@@ -390,7 +387,7 @@
         background: #C4CBCF;
         padding: 1rem;
         text-align: center;
-        margin-top: auto; /* Empurra o footer para baixo */
+        margin-top: auto;
     }
 
     @media (max-width: 768px) {

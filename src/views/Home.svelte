@@ -3,7 +3,6 @@
 </script>
 
 <div class="home-container">
-    <!-- Barra superior igual às outras páginas -->
     <header class="app-header">
         <div class="logo-container">
             <img src="/images/fracionando.png" alt="Logo Fracionando" class="logo" />
@@ -14,7 +13,7 @@
         </div>
     </header>
 
-    <!-- Conteúdo principal -->
+    <!-- principal -->
     <main class="hero-section">
         <div class="hero-content">
             <h1 class="hero-title">Fracionando</h1>
@@ -30,7 +29,6 @@
 </div>
 
 <style>
-    /* Estilos globais consistentes */
     :global(body, html) {
         margin: 0;
         padding: 0;
@@ -46,7 +44,6 @@
         flex-direction: column;
     }
 
-    /* Barra superior idêntica às outras páginas */
     .app-header {
         display: flex;
         justify-content: space-between;
@@ -147,7 +144,7 @@
         color: #5B5C65;
     }
 
-    /* Responsividade */
+    /* responsividade */
     @media (max-width: 768px) {
         .hero-title {
             font-size: 2.5rem;

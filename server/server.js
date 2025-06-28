@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 const app = express();
 app.use(express.json());
 import cors from 'cors';
+
 app.use(cors({
     origin: 'http://localhost:8080',
     credentials: true
@@ -74,6 +75,60 @@ app.get("/api/turmas", async (req, res) => {
         .populate('alunos', 'nome email');
     res.json(turmas);
 })
+
+app.put("/api/turmas/:idTurma/adicionar-aluno", async (req, res) => {
+    const { idTurma } = req.params;
+    const { idAluno } = req.body;
+
+    // Validação dos IDs
+    if (!mongoose.Types.ObjectId.isValid(idTurma)) {
+        return res.status(400).json({ success: false, message: "ID da turma inválido" });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(idAluno)) {
+        return res.status(400).json({ success: false, message: "ID do aluno inválido" });
+    }
+
+    try {
+        // Verifica se o aluno existe
+        const aluno = await Usuario.findById(idAluno);
+        if (!aluno || aluno.tipo !== 'aluno') {
+            return res.status(404).json({ 
+                success: false, 
+                message: "Aluno não encontrado ou tipo inválido" 
+            });
+        }
+
+        // Atualização otimizada usando findByIdAndUpdate
+        const turmaAtualizada = await Turma.findByIdAndUpdate(
+            idTurma,
+            { $addToSet: { alunos: idAluno } }, // $addToSet previne duplicatas
+            { new: true, runValidators: true }
+        ).populate('idProfessor', 'nome email')
+         .populate('alunos', 'nome email');
+
+        if (!turmaAtualizada) {
+            return res.status(404).json({ 
+                success: false, 
+                message: "Turma não encontrada" 
+            });
+        }
+
+        res.status(200).json({ 
+            success: true,
+            message: "Aluno adicionado com sucesso",
+            turma: turmaAtualizada
+        });
+
+    } catch (err) {
+        console.error("Erro ao adicionar aluno:", err);
+        res.status(500).json({ 
+            success: false,
+            message: "Erro no servidor",
+            error: err.message 
+        });
+    }
+});
 
 app.post("/api/questaoDiaria", async (req, res) => {
     const questao = new QuestaoDiaria(req.body);

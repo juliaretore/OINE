@@ -1,84 +1,124 @@
 <script>
     import { onMount } from 'svelte';
     import { navigate } from 'svelte-routing';
+    import { slide } from 'svelte/transition';
 
     let nome = '';
     let email = '';
     let senha = '';
     let confirmarSenha = '';
     let tipo = '';
+    let cpf = '';
+    let matricula = '';
     let turmaSelecionada = '';
     let turmas = [];
-    let mensagem = '';
-    let carregando = false;
+    let errorMessage = '';
+    let isLoading = false;
+    let showNotification = false;
+    let carregandoTurmas = true;
 
     onMount(async () => {
-        const res = await fetch('http://localhost:3000/api/turmas');
-        turmas = await res.json();
+        try {
+            console.log("Iniciando carregamento de turmas...");
+            const res = await fetch('http://localhost:3000/api/turmas');
+            if (!res.ok) throw new Error('Erro ao carregar turmas');
+            turmas = await res.json();
+            console.log("Turmas recebidas:", turmas); // ← Adicione esta linha
+        } catch (error) {
+            console.error("Erro detalhado:", error); // ← Log mais detalhado
+            showError('❌ Erro ao carregar turmas disponíveis');
+        } finally {
+            carregandoTurmas = false;
+        }
     });
 
-    async function cadastrar() {
-        mensagem = '';
+    function showError(message) {
+        errorMessage = message;
+        showNotification = true;
+        
+        const timer = setTimeout(() => {
+            if (showNotification) showNotification = false;
+        }, message.includes('✅') ? 2000 : 5000);
 
+        return () => clearTimeout(timer);
+    }
+
+    async function cadastrar() {
+        // Validação dos campos
         if (!nome || !email || !senha || !confirmarSenha) {
-            mensagem = 'Preencha todos os campos.';
+            showError('Preencha todos os campos obrigatórios');
             return;
         }
 
         if (tipo !== 'aluno' && tipo !== 'professor') {
-            mensagem = 'Selecione se é Aluno ou Professor.';
+            showError('Selecione o tipo de usuário');
             return;
         }
 
         if (senha !== confirmarSenha) {
-            mensagem = 'As senhas não conferem.';
+            showError('As senhas não conferem');
             return;
         }
 
-        carregando = true;
+        if (tipo === 'aluno' && !turmaSelecionada) {
+            showError('Selecione uma turma para o aluno');
+            return;
+        }
 
-        const usuario = { nome, email, senha, tipo };
+        isLoading = true;
+        showNotification = false;
+
+        const usuario = { 
+            nome, 
+            email, 
+            senha, 
+            tipo, 
+            cpf,
+            matricula: tipo === 'aluno' ? matricula : undefined 
+        };
 
         try {
-            const res = await fetch('http://localhost:3000/api/usuario', {
+            // 1. Cadastro do usuário
+            const resUsuario = await fetch('http://localhost:3000/api/usuario', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(usuario)
             });
 
-            if (!res.ok) {
-                const erro = await res.json();
-                mensagem = erro.message || 'Erro ao cadastrar.';
-                carregando = false;
-                return;
+            if (!resUsuario.ok) {
+                const erro = await resUsuario.json();
+                throw new Error(erro.message || 'Erro ao cadastrar usuário');
             }
 
-            const { user } = await res.json();
+            const { user } = await resUsuario.json();
 
+            // 2. Se for aluno, adiciona à turma selecionada
             if (tipo === 'aluno' && turmaSelecionada) {
-                const turma = turmas.find(t => t._id === turmaSelecionada);
-                if (turma) {
-                    turma.alunos.push(user._id);
-                    await fetch('http://localhost:3000/api/turma', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            serie: turma.serie,
-                            idProfessor: turma.idProfessor._id,
-                            alunos: turma.alunos
-                        })
-                    });
+                const resTurma = await fetch(`http://localhost:3000/api/turmas/${turmaSelecionada}/adicionar-aluno`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ idAluno: user._id })
+                });
+
+                if (!resTurma.ok) {
+                    const erro = await resTurma.json();
+                    throw new Error(erro.message || 'Erro ao associar aluno à turma');
                 }
             }
 
-            mensagem = '✅ Usuário cadastrado com sucesso!';
-            setTimeout(() => navigate('/login'), 2000);
+            // Sucesso - mostra notificação e redireciona
+            showError('✅ Cadastro realizado com sucesso!');
+            localStorage.setItem("usuarioLogado", JSON.stringify(user));
+            
+            setTimeout(() => {
+                navigate(user.tipo === 'professor' ? '/home-professor' : '/home-aluno');
+            }, 2000);
 
         } catch (err) {
             console.error(err);
-            mensagem = '❌ Erro na requisição.';
+            showError(`❌ ${err.message}`);
         } finally {
-            carregando = false;
+            isLoading = false;
         }
     }
 </script>
@@ -91,30 +131,38 @@
         </div>
         <div class="auth-options">
             <button class="btn-login" on:click={() => navigate('/login')}>Login</button>
-            <button class="btn-cadastro" on:click={() => navigate('/cadastro')}>Cadastro</button>
+            <button class="btn-cadastro active">Cadastro</button>
         </div>
     </header>
+
+    <!-- Notificação -->
+    {#if showNotification}
+        <div class="notification-container">
+            <div transition:slide={{ duration: 300 }}
+                 class="notification {errorMessage.includes('✅') ? 'success' : 'error'}">
+                <span class="message-text">{errorMessage}</span>
+                <button class="close-btn" on:click={() => showNotification = false}>
+                    <span class="close-icon">×</span>
+                </button>
+            </div>
+        </div>
+    {/if}
 
     <!-- Formulário de Cadastro -->
     <main class="login-content">
         <h1 class="login-title">Cadastro</h1>
         
-        {#if mensagem}
-            <div class:error-message={mensagem.includes('❌')} class:success-message={mensagem.includes('✅')}>
-                {mensagem}
-            </div>
-        {/if}
-        
         <form on:submit|preventDefault={cadastrar}>
+            <!-- Campos básicos -->
             <div class="form-group">
-                <label for="nome">Nome:</label>
+                <label for="nome">Nome Completo:</label>
                 <input 
                     type="text" 
                     id="nome" 
                     bind:value={nome}
-                    placeholder="Seu nome completo"
+                    placeholder="Digite seu nome completo"
                     required
-                    disabled={carregando}
+                    disabled={isLoading}
                 />
             </div>
             
@@ -126,7 +174,19 @@
                     bind:value={email}
                     placeholder="seu@email.com"
                     required
-                    disabled={carregando}
+                    disabled={isLoading}
+                />
+            </div>
+            
+            <div class="form-group">
+                <label for="cpf">CPF:</label>
+                <input 
+                    type="text" 
+                    id="cpf" 
+                    bind:value={cpf}
+                    placeholder="Digite seu CPF"
+                    required
+                    disabled={isLoading}
                 />
             </div>
             
@@ -136,8 +196,9 @@
                     type="password" 
                     id="senha" 
                     bind:value={senha}
+                    placeholder="Crie uma senha"
                     required
-                    disabled={carregando}
+                    disabled={isLoading}
                 />
             </div>
             
@@ -147,58 +208,68 @@
                     type="password" 
                     id="confirmarSenha" 
                     bind:value={confirmarSenha}
+                    placeholder="Repita sua senha"
                     required
-                    disabled={carregando}
+                    disabled={isLoading}
                 />
             </div>
             
+            <!-- Tipo de usuário -->
             <div class="radio-group">
                 <p>Tipo de usuário:</p>
                 <div class="radio-options">
                     <label>
-                        <input
-                            type="radio"
-                            name="tipo"
-                            value="aluno"
-                            checked={tipo === 'aluno'}
-                            on:change={() => tipo = 'aluno'}
-                            disabled={carregando} />
+                        <input 
+                            type="radio" 
+                            name="tipo" 
+                            value="aluno" 
+                            bind:group={tipo}
+                            on:click={() => {
+                                tipo = 'aluno';
+                                console.log('Tipo definido como aluno, turmas:', turmas);
+                            }}
+                        />
                         Aluno
                     </label>
-                    
                     <label>
-                        <input
-                            type="radio"
-                            name="tipo"
-                            value="professor"
-                            checked={tipo === 'professor'}
-                            on:change={() => tipo = 'professor'}
-                            disabled={carregando} />
+                        <input 
+                            type="radio" 
+                            name="tipo" 
+                            value="professor" 
+                            bind:group={tipo} 
+                            disabled={isLoading} 
+                        />
                         Professor
                     </label>
                 </div>
             </div>
             
+            <!-- Campos específicos para ALUNOS -->
             {#if tipo === 'aluno'}
-                <div class="form-group">
-                    <label for="turma">Turma:</label>
-                    <select 
-                        id="turma" 
-                        bind:value={turmaSelecionada} 
-                        required
-                        disabled={carregando}>
-                        <option value="" disabled selected>Selecione uma turma</option>
-                        {#each turmas as turma}
-                            <option value={turma._id}>
-                                {turma.serie}ª série — Professor: {turma.idProfessor.nome}
-                            </option>
-                        {/each}
-                    </select>
+                <div class="form-group" style="border: 1px solid blue; padding: 1rem;">
+                    <label>Turmas disponíveis ({turmas.length}):</label>
+                    {#if turmas.length === 0}
+                        <p>Nenhuma turma disponível</p>
+                    {:else}
+                        <select bind:value={turmaSelecionada}>
+                            <option value="">Selecione uma turma</option>
+                            {#each turmas as turma}
+                                <option value={turma._id}>
+                                    {turma.nome || `Turma ${turma._id}`}
+                                </option>
+                            {/each}
+                        </select>
+                    {/if}
                 </div>
             {/if}
             
-            <button type="submit" class="submit-btn" disabled={carregando}>
-                {carregando ? 'Cadastrando...' : 'Cadastrar'}
+            <!-- Botão de submit -->
+            <button type="submit" class="submit-btn" disabled={isLoading}>
+                {#if isLoading}
+                    <span class="spinner"></span> Cadastrando...
+                {:else}
+                    Cadastrar
+                {/if}
             </button>
             
             <div class="login-links">
@@ -209,11 +280,13 @@
         </form>
     </main>
 </div>
+
 <style>
     :global(body, html) {
         margin: 0;
         padding: 0;
         height: 100%;
+        font-family: 'Baloo 2', sans-serif;
     }
 
     .login-container {
@@ -221,18 +294,6 @@
         background: #EBF4F2;
         display: flex;
         flex-direction: column;
-    }
-
-    .login-content {
-        max-width: 700px;
-        width: 90%;
-        margin: 2rem auto;
-        padding: 2.5rem;
-        background: white;
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        flex-grow: 1;
-        margin-bottom: 3rem;
     }
 
     .app-header {
@@ -264,11 +325,16 @@
         font-weight: 800;
         font-size: 1rem;
         cursor: pointer;
+        transition: all 0.2s;
     }
 
     .btn-login {
         background-color: #67B8F0;
         color: white;
+    }
+
+    .btn-login:hover {
+        background-color: #5aa8e0;
     }
 
     .btn-cadastro {
@@ -278,6 +344,21 @@
 
     .btn-cadastro.active {
         background-color: #4ad1b0;
+    }
+
+    .btn-cadastro:hover {
+        background-color: #4ad1b0;
+    }
+
+    .login-content {
+        max-width: 700px;
+        width: 90%;
+        margin: 2rem auto;
+        padding: 2.5rem;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 3rem;
     }
 
     .login-title {
@@ -306,6 +387,13 @@
         border: 1px solid #ddd;
         border-radius: 4px;
         font-size: 1.05rem;
+        transition: border-color 0.3s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+        border-color: #67B8F0;
+        outline: none;
     }
 
     .radio-group {
@@ -341,6 +429,15 @@
         font-weight: bold;
         cursor: pointer;
         margin: 1.5rem 0;
+        transition: background-color 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .submit-btn:hover {
+        background-color: #5aa8e0;
     }
 
     .submit-btn:disabled {
@@ -357,39 +454,112 @@
         color: #5B5C65;
         text-decoration: none;
         font-size: 1.05rem;
+        transition: color 0.2s;
     }
 
     .login-links a:hover {
+        color: #67B8F0;
         text-decoration: underline;
     }
 
-    .error-message {
+    select {
+        width: 100%;
+        padding: 0.85rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 1.05rem;
+        background-color: white;
+        cursor: pointer;
+    }
+
+    select:disabled {
+        background-color: #f5f5f5;
+        cursor: not-allowed;
+    }
+
+    .placeholder-option {
+        color: #999;
+    }
+
+    .error-text {
         color: #e74c3c;
-        background-color: #fadbd8;
-        padding: 1rem;
-        border-radius: 4px;
-        margin-bottom: 1.5rem;
-        text-align: center;
-        font-size: 1.05rem;
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
     }
 
-    .success-message {
-        color: #27ae60;
-        background-color: #d5f5e3;
-        padding: 1rem;
-        border-radius: 4px;
-        margin-bottom: 1.5rem;
-        text-align: center;
-        font-size: 1.05rem;
+    .notification-container {
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        z-index: 1000;
+        max-width: 350px;
     }
 
-    .footer {
-        background: #C4CBCF;
-        padding: 1rem;
-        text-align: center;
-        margin-top: auto;
+    .notification {
+        padding: 0.75rem 1.25rem;
+        border-radius: 8px;
+        color: white;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        opacity: 0.96;
+        backdrop-filter: blur(3px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
     }
 
+    .notification.error {
+        background: rgba(231, 76, 60, 0.92);
+    }
+
+    .notification.success {
+        background: rgba(39, 174, 96, 0.92);
+    }
+
+    .message-text {
+        flex-grow: 1;
+        padding-right: 1rem;
+    }
+
+    .close-btn {
+        background: rgba(255, 255, 255, 0.15);
+        border: none;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .close-btn:hover {
+        background: rgba(255, 255, 255, 0.25);
+    }
+
+    .close-icon {
+        font-size: 1.1rem;
+        line-height: 1;
+        margin-top: -1px;
+    }
+
+    /* Spinner */
+    .spinner {
+        width: 18px;
+        height: 18px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: white;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* Responsividade */
     @media (max-width: 768px) {
         .login-content {
             padding: 2rem;
@@ -403,12 +573,18 @@
         
         .radio-options {
             flex-direction: column;
-            gap: 0.75rem;
+            gap: 0.5rem;
         }
-
+        
         .form-group input,
         .form-group select {
             padding: 0.75rem;
+        }
+        
+        .notification-container {
+            top: 80px;
+            right: 10px;
+            max-width: calc(100% - 20px);
         }
     }
 </style>

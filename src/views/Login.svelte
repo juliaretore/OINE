@@ -13,7 +13,7 @@
         errorMessage = '';
         
         try {
-            // 1. requisição API de login
+            // requisição API de login
             const response = await fetch('http://localhost:3000/api/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -22,12 +22,12 @@
 
             const data = await response.json();
 
-            // 2. login bem-sucedido
+            // login bem-sucedido
             if (response.ok) {
                 // Salva os dados do usuário no localStorage
                 localStorage.setItem("usuarioLogado", JSON.stringify(data.user));
                 
-                // 3. por tipo de usuário
+                // login por tipo de usuário
                 if (data.user.tipo === 'professor') {
                     navigate('/home-professor');
                 } else if (data.user.tipo === 'aluno') {
@@ -36,7 +36,6 @@
                     errorMessage = 'Tipo de usuário desconhecido.';
                 }
             } else {
-                // Exibe mensagem de erro da API
                 errorMessage = data.message || 'Erro ao fazer login. Verifique suas credenciais.';
             }
         } catch (err) {
@@ -60,7 +59,6 @@
         </div>
     </header>
 
-    <!-- Formulário de Login -->
     <main class="login-content">
         <h1 class="login-title">Login</h1>
         
@@ -121,7 +119,6 @@
 </div>
 
 <style>
-    /* ESTILOS GLOBAIS */
     :global(body, html) {
         margin: 0;
         padding: 0;
@@ -129,7 +126,7 @@
         font-family: 'Baloo 2', sans-serif;
     }
     
-    /* CONTAINER PRINCIPAL */
+    /* principal */
     .login-container {
         width: 100%;
         min-height: 100vh;
@@ -138,7 +135,6 @@
         flex-direction: column;
     }
 
-    /* BARRA SUPERIOR */
     .app-header {
         display: flex;
         justify-content: space-between;
@@ -202,7 +198,6 @@
         background-color: #4ad1b0;
     }
 
-    /* FORMULÁRIO */
     .login-content {
         max-width: 700px;
         width: 90%;
@@ -277,7 +272,7 @@
         cursor: not-allowed;
     }
     
-    /* LINKS */
+    /* links */
     .login-links {
         display: flex;
         justify-content: space-between;
@@ -296,7 +291,6 @@
         text-decoration: underline;
     }
     
-    /* MENSAGENS */
     .error-message {
         color: #e74c3c;
         background-color: #fadbd8;
@@ -317,7 +311,7 @@
         font-size: 1.05rem;
     }
 
-    /* RESPONSIVIDADE */
+    /* responsividade */
     @media (max-width: 768px) {
         .login-content {
             padding: 2rem;

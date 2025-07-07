@@ -21,10 +21,15 @@
         try {
             carregando = true;
             const res = await fetch('http://localhost:3000/api/turmas');
-            const data = await res.json();
-            turmas = data;
-            if (data.length > 0) {
-                turmaSelecionada = data[0]._id;
+            const todasTurmas = await res.json();
+            
+            turmas = todasTurmas.filter(turma => {
+                const idProfessor = turma.idProfessor?._id || turma.idProfessor;
+                return idProfessor === usuarioLogado._id;
+            });
+
+            if (turmas.length > 0) {
+                turmaSelecionada = turmas[0]._id;
                 await carregarProgresso();
             }
         } catch (error) {
@@ -100,25 +105,26 @@
     <main class="main-container">
       <h1 class="page-title">Olá, {usuarioLogado.nome}!</h1>
         <div class="page-header">
-            
         </div>
         
         <div class="content-box">
-          <h2 class="page-title">Progresso da Turma</h2>
-            <div class="header-boxes">
-                  <div class="oval-box">
-                      <span class="box-label">Selecione a Turma</span>
-                      <select on:change={onTurmaChange} class="turma-select">
-                          {#each turmas as turma}
-                              <option value={turma._id}>{turma.nome}</option>
-                          {/each}
-                      </select>
-                  </div>
-                  <div class="oval-box">
-                      <span class="box-label">Alunos na Turma</span>
-                      <span class="box-value">{turmas.find(t => t._id === turmaSelecionada)?.alunos.length || 0}</span>
-                  </div>
-              </div>
+            <div class="box-header">
+                <h2 class="page-title">Progresso da Turma</h2>
+                <div class="header-boxes">
+                    <div class="oval-box">
+                        <span class="box-label">Selecione a Turma</span>
+                        <select on:change={onTurmaChange} class="turma-select">
+                            {#each turmas as turma}
+                                <option value={turma._id}>{turma.nome}</option>
+                            {/each}
+                        </select>
+                    </div>
+                    <div class="oval-box">
+                        <span class="box-label">Alunos na Turma</span>
+                        <span class="box-value">{turmas.find(t => t._id === turmaSelecionada)?.alunos.length || 0}</span>
+                    </div>
+                </div>
+            </div>
             {#if carregando}
                 <div class="loading">Carregando...</div>
             {:else}
@@ -275,6 +281,15 @@
         font-weight: 800;
     }
 
+    .box-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
     .section-title {
         color: #5B5C65;
         font-size: 1.5rem;
@@ -307,7 +322,7 @@
 
     .box-value {
         font-weight: bold;
-        color: #4CAF50;
+        color: #67B8F0;
         font-size: 1.2rem;
     }
 
@@ -344,7 +359,7 @@
         margin-top: 0;
         margin-bottom: 1.5rem;
         text-align: center;
-        border-bottom: 2px solid #4CAF50;
+        border-bottom: 2px solid #67B8F0;
         padding-bottom: 0.5rem;
     }
 
@@ -390,7 +405,7 @@
     }
 
     .progress-value {
-        color: #4CAF50;
+        color: #5B5C65;
         font-weight: 700;
         min-width: 80px;
         text-align: right;

@@ -22,17 +22,20 @@
 
 async function carregarTurmas() {
     try {
+        carregando = true;
+        mensagem = '';
+        
         const response = await fetch('http://localhost:3000/api/turmas');
         
         if (!response.ok) {
-            throw new Error(`Erro HTTP: ${response.status}`);
+            throw new Error(`Erro ao carregar turmas: ${response.status}`);
         }
-
+        
         const todasTurmas = await response.json();
         
-        turmas = todasTurmas.filter(t => {
-            const professorId = typeof t.idProfessor === 'object' ? t.idProfessor._id : t.idProfessor;
-            return professorId === usuarioLogado._id;
+        turmas = todasTurmas.filter(turma => {
+            const idProfessor = turma.idProfessor?._id || turma.idProfessor;
+            return idProfessor === usuarioLogado._id;
         });
         
         quantidadeTurmas = turmas.length;
@@ -40,12 +43,15 @@ async function carregarTurmas() {
         
         alunosPorTurma = turmas.map(turma => ({
             nome: turma.nome,
-            quantidade: turma.alunos?.length || 0
+            quantidade: turma.alunos?.length || 0,
+            id: turma._id
         }));
         
     } catch (error) {
         console.error("Erro ao carregar turmas:", error);
         mensagem = '❌ Erro ao carregar turmas';
+    } finally {
+        carregando = false;
     }
 }
 
@@ -135,7 +141,7 @@ async function carregarTurmas() {
         
         <div class="content-box">
             <div class="form-header">
-                <h2 class="section-title">Gerenciar Turmas</h2>
+                <h2 class="section-title">Minhas Turmas</h2>
                 <button 
                     on:click={toggleFormulario} 
                     class="btn-cadastrar-toggle {mostrarFormulario ? 'ativo' : ''}"
@@ -181,22 +187,24 @@ async function carregarTurmas() {
                     {/if}
                 </form>
             {/if}
-        </div>
-        
-        {#if turmas.length > 0}
-            <div class="content-box">
-                <h2 class="section-title">Minhas Turmas</h2>
-                
+            
+            {#if turmas.length > 0}
                 <div class="turmas-grid">
-                    {#each alunosPorTurma as turma}
+                    {#each alunosPorTurma as turma (turma.id)}
                         <div class="turma-item">
                             <div class="turma-nome">{turma.nome}</div>
                             <div class="turma-quantidade">{turma.quantidade} alunos</div>
                         </div>
                     {/each}
                 </div>
-            </div>
-        {/if}
+            {:else}
+                <div class="sem-turmas">
+                    {#if !mostrarFormulario}
+                        <p>Você ainda não tem turmas cadastradas</p>
+                    {/if}
+                </div>
+            {/if}
+        </div>
     </main>
 </div>
 
@@ -437,11 +445,11 @@ async function carregarTurmas() {
         background-color: #67B8F0;
         color: white;
         border: none;
-        border-radius: 8px;
         font-weight: 600;
         font-size: 1rem;
         cursor: pointer;
         transition: all 0.3s;
+        border-radius: 20px;
     }
     
     .btn-cadastrar:hover:not(:disabled) {

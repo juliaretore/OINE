@@ -18,6 +18,7 @@
         tentativas = await carregarTentativas(2, usuarioLogado, questao);
         todasAsTentativas = await carregarTentativasPorUsuarioTipo(2, usuarioLogado);
         concluido = tentativas.filter(t => t.acertos === 3).length > 0;
+        feedback = concluido; // Exibe o feedback se já estiver concluído
         iniciarRespostas();
     });
 
@@ -37,9 +38,11 @@
         ];
     }
 
+    let feedback = null;
+
     async function conferir() {
         resultados.forEach(r => {
-            const resultadoNum = r.num1 * r.den2 + r.num2 * r.den1;
+            const resultadoNum = r.num1 * r.den2 - r.num2 * r.den1;
             const resultadoDen = r.den1 * r.den2;
 
             const resultadoSimplificado = simplificarFracao(resultadoNum, resultadoDen);
@@ -57,11 +60,19 @@
             todasAsTentativas = await carregarTentativasPorUsuarioTipo(4, usuarioLogado);
             await tick(); 
             concluido = true;
+            feedback = true; // Exibe o feedback
         } else {
             await salvarTentativa(acertos, 4, questao, usuarioLogado);
             tentativas = [...tentativas, {acertos}];
         }
         resultados = [...resultados];
+    }
+
+        $: if (concluido) {
+        resultados.forEach(r => {
+            r.respNum = simplificarFracao(r.num1 * r.den2 - r.num2 * r.den1, r.den1 * r.den2).num;
+            r.respDen = simplificarFracao(r.num1 * r.den2 - r.num2 * r.den1, r.den1 * r.den2).den;
+        });
     }
 </script>
 
@@ -97,11 +108,11 @@
     </div>
 
     <div class="content">
-        {#if concluido}
+        {#if concluido && feedback}
             <Feedback 
             {tentativas} 
             {todasAsTentativas} 
-            onClose={() => concluido = false}
+            onClose={() => feedback = false}
         />
         {:else}
             <div class="questao-container">
@@ -130,6 +141,7 @@
                                 <div class="resposta-container">
                                     <div class="fracao-input">
                                         <input
+                                            disabled={concluido}
                                             type="number"
                                             bind:value={r.respNum}
                                             placeholder=""
@@ -138,6 +150,7 @@
                                         />
                                         <div class="fracao-line"></div>
                                         <input
+                                            disabled={concluido}
                                             type="number"
                                             bind:value={r.respDen}
                                             placeholder=""

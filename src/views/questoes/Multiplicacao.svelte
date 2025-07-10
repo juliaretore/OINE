@@ -58,9 +58,9 @@
             await salvarTentativa(acertos, 3, questao, usuarioLogado);
             tentativas = await carregarTentativas(3, usuarioLogado, questao);
             todasAsTentativas = await carregarTentativasPorUsuarioTipo(3, usuarioLogado);
-            await tick();
             concluido = true;
             feedback = true; // Exibe o feedback
+            await tick();
         } else {
             await salvarTentativa(acertos, 3, questao, usuarioLogado);
             tentativas = [...tentativas, {acertos}];

@@ -74,7 +74,9 @@
         resultados.forEach(r => {
             r.respNum = simplificarFracao(r.num1 * r.den2,r.den1 * r.num2).num;
             r.respDen = simplificarFracao(r.num1 * r.den2, r.den1 * r.num2).den;
+            r.correto = true; // Marca todas como corretas se já estiver concluído
         });
+        resultados = [...resultados];
     }
 </script>
 
@@ -293,6 +295,7 @@
         align-items: center;
         box-sizing: border-box;
         overflow: hidden; 
+        min-height: 42.8vw;
     }
 
     .questao-container {

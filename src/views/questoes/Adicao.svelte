@@ -71,6 +71,7 @@
             resultados.forEach(r => {
                 r.respNum = simplificarFracao(r.num1 * r.den2 + r.num2 * r.den1,  r.den1 * r.den2).num;
                 r.respDen = simplificarFracao(r.num1 * r.den2 + r.num2 * r.den1,  r.den1 * r.den2).den;
+                r.correto = true; 
             });
         }
     
@@ -291,6 +292,7 @@
         align-items: center;
         box-sizing: border-box;
         overflow: hidden; 
+        min-height: 42.8vw;
     }
 
     .questao-container {

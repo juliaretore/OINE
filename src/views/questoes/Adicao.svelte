@@ -54,14 +54,14 @@
         });
         const acertos = resultados.filter(r => r.correto).length;
         if(acertos === 3) {
-            await salvarTentativa(acertos, 4, questao, usuarioLogado);
-            tentativas = await carregarTentativas(4, usuarioLogado, questao);
-            todasAsTentativas = await carregarTentativasPorUsuarioTipo(4, usuarioLogado);
+            await salvarTentativa(acertos, 1, questao, usuarioLogado);
+            tentativas = await carregarTentativas(1, usuarioLogado, questao);
+            todasAsTentativas = await carregarTentativasPorUsuarioTipo(1, usuarioLogado);
             await tick(); 
             concluido = true;
             feedback = true;
         } else {
-            await salvarTentativa(acertos, 4, questao, usuarioLogado);
+            await salvarTentativa(acertos, 1, questao, usuarioLogado);
             tentativas = [...tentativas, {acertos}];
         }
         resultados = [...resultados];

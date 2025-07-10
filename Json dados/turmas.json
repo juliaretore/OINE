@@ -1,11 +1,12 @@
-
 [
   {
+    "_id": { "$oid": "668d8c3b4d5e6f7a8b9c0d1a" },
     "serie": 6,
-    "idProfessor": { "$oid": "6851bb5ce78bbe1bc0f8fcdd" },
+    "nome": "Turma A",
+    "idProfessor": { "$oid": "668d8b1a2c3d4e5f6a7b8c1d" },
     "alunos": [
-      { "$oid": "6851bb5ce78bbe1bc0f8fcde" },
-      { "$oid": "6851bb5ce78bbe1bc0f8fcdf" }
+      { "$oid": "668d8b1a2c3d4e5f6a7b8c1e" },
+      { "$oid": "668d8b1a2c3d4e5f6a7b8c1f" }
     ]
   }
 ]

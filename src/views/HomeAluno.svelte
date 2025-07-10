@@ -3,141 +3,141 @@
     import { onMount } from 'svelte';
     import { link } from "svelte-routing";
 
-    export async function fetchTentativas(alunoId) {
+    async function fetchTentativas(alunoId) {
         const response = await fetch(`http://localhost:3000/api/tentativas?aluno=${alunoId}`);
         if (!response.ok) throw new Error('Erro ao buscar tentativas');
         return await response.json();
     }
 
-    export async function fetchTurmaDoUsuario(alunoId) {
+    async function fetchTurmaDoUsuario(alunoId) {
         const response = await fetch(`http://localhost:3000/api/turma-do-usuario/${alunoId}`);
         if (!response.ok) throw new Error('Erro ao buscar turma');
         return await response.json();
     }
-
-    function getWeekNumber(date) {
-        const d = new Date(date);
-        d.setHours(0, 0, 0, 0);
-        d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
-        const week1 = new Date(d.getFullYear(), 0, 4);
-        return 1 + Math.round(((d - week1) / 86400000 + (week1.getDay() + 6) % 7 - 3) / 7);
-    }
-
-    function getYearWeekString(date) {
-        const d = new Date(date);
-        const year = d.getFullYear();
-        const week = getWeekNumber(d);
-        return `${year}-${week.toString().padStart(2, '0')}`;
-    }
-
     const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado"));
-    let tentativas = [];
-    let quantidadeSemanas = 0;
     let turma = null;
+    let diasDaSemana = []; // Array para guardar os dados dos últimos 7 dias
+    let tentativas = []; // Array para guardar as tentativas do usuário
+
+    let quantidadeJogos = 0;
     let sequenciaAtual = 0;
     let maiorSequencia = 0;
-    let vitoriasPorSemana = [];
+    let vitoriasPorQuestao = []; // Para debug ou exibir
 
     onMount(async () => {
         if (usuarioLogado && usuarioLogado._id){
-            turma = await fetchTurmaDoUsuario(usuarioLogado._id);
-            tentativas = await fetchTentativas(usuarioLogado._id);
-            tentativas.sort((a, b) => new Date(a.dataHora) - new Date(b.dataHora));
-            calcularProgressoSemanal();
+            try {
+                turma = await fetchTurmaDoUsuario(usuarioLogado._id);
+                tentativas = await fetchTentativas(usuarioLogado._id);
+                quantidadeJogos = tentativas.filter((tentativa, index, self) => {return index === self.findIndex(t =>  t.questaoDiaria === tentativa.questaoDiaria && t.tipo === tentativa.tipo);});
+                console.log("quantidadeJogos:", quantidadeJogos);
+                const todasAsTentativas = await fetchTentativas(usuarioLogado._id);
+                calcularSequenciasDeVitorias();
+                processarDiasDaSemana(todasAsTentativas);
+            } catch (error) {
+                console.error("Falha ao carregar dados:", error);
+            }
         }
     });
 
-    function calcularProgressoSemanal() {
-        const tentativasPorSemana = {};
-        
+     function calcularSequenciasDeVitorias() {
+        const agrupado = {};
         for (const tentativa of tentativas) {
-            const semana = getYearWeekString(tentativa.dataHora);
-            if (!tentativasPorSemana[semana]) {
-                tentativasPorSemana[semana] = [];
-            }
-            tentativasPorSemana[semana].push(tentativa);
+            const qid = tentativa.questaoDiaria._id;
+            if (!agrupado[qid]) agrupado[qid] = [];
+            agrupado[qid].push(tentativa);
         }
 
         const resultados = [];
-        
-        for (const [semana, tentativasDaSemana] of Object.entries(tentativasPorSemana)) {
+        for (const [questaoId, tentativasDaQuestao] of Object.entries(agrupado)) {
+            const tiposComSucesso = new Set();
+            for (const tentativa of tentativasDaQuestao)
+                if (tentativa.acertos === 3) tiposComSucesso.add(tentativa.tipo);
 
-            const questoesDaSemana = {};
-            
-            for (const tentativa of tentativasDaSemana) {
-                const qid = tentativa.questaoDiaria._id;
-                if (!questoesDaSemana[qid]) questoesDaSemana[qid] = [];
-                questoesDaSemana[qid].push(tentativa);
-            }
-
-            let todasQuestoesCompletas = true;
-            let todasQuestoesPerfeitas = true;
-            
-            for (const [questaoId, tentativasDaQuestao] of Object.entries(questoesDaSemana)) {
-                const tiposComSucesso = new Set();
-                for (const tentativa of tentativasDaQuestao) {
-                    if (tentativa.acertos === 3) tiposComSucesso.add(tentativa.tipo);
-                }
-
-                const venceu = [1, 2, 3, 4].every(tipo => tiposComSucesso.has(tipo));
-                if (!venceu) {
-                    todasQuestoesCompletas = false;
-                    todasQuestoesPerfeitas = false;
-                    break;
-                }
-
-                const perfeito = [1, 2, 3, 4].every(tipo => {
-                    const tentativasDoTipo = tentativasDaQuestao.filter(t => t.tipo === tipo);
-                    return tentativasDoTipo.length === 1 && tentativasDoTipo[0].acertos === 3;
-                });
-                
-                if (!perfeito) {
-                    todasQuestoesPerfeitas = false;
-                }
-            }
-
+            const venceu = [1, 2, 3, 4].every(tipo => tiposComSucesso.has(tipo));
             const dataMaisRecente = Math.max(
-                ...tentativasDaSemana.map(t => new Date(t.dataHora).getTime())
+                ...tentativasDaQuestao.map(t => new Date(t.dataHora).getTime())
             );
 
             resultados.push({
-                semana,
-                completou: todasQuestoesCompletas,
-                perfeito: todasQuestoesPerfeitas,
+                questaoId,
+                venceu,
                 data: dataMaisRecente
             });
         }
 
         resultados.sort((a, b) => a.data - b.data);
-        vitoriasPorSemana = resultados;
-        quantidadeSemanas = resultados.length;
-        
+        vitoriasPorQuestao = resultados;
         let atual = 0;
         let max = 0;
 
         for (const resultado of resultados) {
-            if (resultado.completou) {
+            if (resultado.venceu) {
                 atual++;
                 if (atual > max) max = atual;
-            } else {
-                atual = 0;
-            }
+            } else atual = 0;
         }
         maiorSequencia = max;
-        
         sequenciaAtual = 0;
+        console.log("resultados:", resultados);
         for (let i = resultados.length - 1; i >= 0; i--) {
-            if (resultados[i].completou) {
+
+            console.log("resultado:", resultados[i]);
+            if (resultados[i].venceu) {
                 sequenciaAtual++;
-            } else {
-                break;
-            }
+            } else break;
         }
     }
 
-    function getStatusDoDia(index) {
-        const statusOptions = ["", "incompleto", "concluido", "concluido-com-unica-tentativa"];
-        return statusOptions[Math.floor(Math.random() * statusOptions.length)];
+
+
+    function calcularStatusParaODia(tentativasDoDia) {
+        if (!tentativasDoDia || tentativasDoDia.length === 0) {
+            return "incompleto";
+        }
+        const tiposComSucesso = new Set();
+        for (const tent of tentativasDoDia) {
+            if (tent.acertos === 3) {
+                tiposComSucesso.add(tent.tipo);
+            }
+        }
+
+        const venceu = [1, 2, 3, 4].every(tipo => tiposComSucesso.has(tipo));
+
+        if (!venceu) {
+            return "incompleto";
+        }
+
+        const perfeito = [1, 2, 3, 4].every(tipo => {
+            const tentativasDoTipo = tentativasDoDia.filter(t => t.tipo === tipo);
+            return tentativasDoTipo.length === 1 && tentativasDoTipo[0].acertos === 3;
+        });
+
+        return perfeito ? "concluido-com-unica-tentativa" : "concluido";
+    }
+
+    function processarDiasDaSemana(todasAsTentativas) {
+        const dias = [];
+        const nomesDias = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+        
+        for (let i = 0; i < 7; i++) {
+            const dataRef = new Date();
+            dataRef.setDate(dataRef.getDate() - i);
+            dataRef.setHours(0, 0, 0, 0);
+
+            const tentativasDoDia = todasAsTentativas.filter(t => {
+                const dataTentativa = new Date(t.dataHora);
+                dataTentativa.setHours(0, 0, 0, 0);
+                return dataTentativa.getTime() === dataRef.getTime();
+            });
+            const status = calcularStatusParaODia(tentativasDoDia);
+            dias.push({
+                data: dataRef,
+                nome: nomesDias[dataRef.getDay()],
+                status: status
+            });
+        }
+        diasDaSemana = dias.reverse();
     }
 
 </script>
@@ -174,17 +174,17 @@
             
             <div class="stats-container">
                 <div class="stat-item">
-                    <div class="stat-label">Semanas de Jogo</div>
-                    <div class="stat-value">{quantidadeSemanas}</div>
+                    <div class="stat-label">Quantidade de Jogos</div>
+                    <div class="stat-value">{quantidadeJogos.length}</div>
                 </div>
                 
                 <div class="stat-item">
-                    <div class="stat-label">Sequência de Semanas</div>
+                    <div class="stat-label">Sequência de Vitórias</div>
                     <div class="stat-value">{sequenciaAtual}</div>
                 </div>
                 
                 <div class="stat-item">
-                    <div class="stat-label">Maior Sequência</div>
+                    <div class="stat-label">Maior Sequência de Vitórias</div>
                     <div class="stat-value">{maiorSequencia}</div>
                 </div>
             </div>
@@ -194,9 +194,11 @@
             <h2 class="section-title">Minha Semana</h2>
             
             <div class="jogos-grid">
-                {#each Array(7).fill(0) as _, i}
-                    <div class="jogo-item {getStatusDoDia(i)}">
-                        <span class="jogo-numero">{(i + 1).toString().padStart(2, '0')}</span>
+                {#each diasDaSemana as dia}
+                    <div class="dia-container">
+                        <div class="dia-texto">{dia.nome}</div>
+                        <div class="jogo-item {dia.status}">
+                            </div>
                     </div>
                 {/each}
             </div>
@@ -246,11 +248,6 @@
         z-index: 100;
     }
 
-    .logo-container {
-        display: flex;
-        align-items: center;
-    }
-
     .logo {
         height: 50px;
     }
@@ -286,10 +283,6 @@
         background-color: #67B8F0;
     }
 
-    .nav-options a:hover {
-        color: #67B8F0;
-    }
-
     .btn-sair {
         padding: 0.5rem 1.5rem;
         background-color: #67B8F0;
@@ -300,11 +293,6 @@
         font-weight: 800;
         font-size: 1rem;
         cursor: pointer;
-        transition: all 0.2s;
-    }
-
-    .btn-sair:hover {
-        background-color: #5aa8e0;
     }
 
     .main-container {
@@ -356,17 +344,15 @@
         justify-content: space-around;
         margin: 2rem 0;
     }
-
+    
     .stat-item {
         text-align: center;
     }
-
     .stat-label {
         color: #5B5C65;
         font-size: 1.1rem;
         margin-bottom: 0.5rem;
     }
-
     .stat-value {
         color: #67B8F0;
         font-size: 2.5rem;
@@ -380,6 +366,18 @@
         margin-top: 1.5rem;
         flex-wrap: wrap;
     }
+    .dia-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px; /* Espaço entre o texto e a estrela */
+    }
+
+    .dia-texto {
+        color: #5B5C65;
+        font-weight: 600;
+        font-size: 1rem;
+    }
 
     .jogo-item {
         position: relative;
@@ -392,6 +390,7 @@
         transition: all 0.2s;
     }
 
+    /* Estrela padrão (não jogado ou não existe) - cor verde */
     .jogo-item::before {
         content: "";
         position: absolute;
@@ -401,7 +400,6 @@
         background-size: contain;
         background-repeat: no-repeat;
         background-position: center;
-        z-index: 0;
     }
 
     .jogo-item.incompleto::before {
@@ -411,21 +409,15 @@
     .jogo-item.concluido-com-unica-tentativa::before {
         background-image: url("data:image/svg+xml,%3Csvg width='50' height='50' viewBox='0 0 50 50' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M25 0L30.9 18.1H49.5L34.3 29.3L40.2 47.4L25 36.2L9.8 47.4L15.7 29.3L0.5 18.1H19.1L25 0Z' fill='%2366F0CE'/%3E%3C/svg%3E");
     }
+    .jogo-item.concluido::before {
+         background-image: url("data:image/svg+xml,%3Csvg width='50' height='50' viewBox='0 0 50 50' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M25 0L30.9 18.1H49.5L34.3 29.3L40.2 47.4L25 36.2L9.8 47.4L15.7 29.3L0.5 18.1H19.1L25 0Z' fill='%2370CF97'/%3E%3C/svg%3E");
+    }
 
     .jogo-item:hover {
         transform: scale(1.1);
     }
 
-    .jogo-numero {
-        position: relative;
-        color: white;
-        font-weight: 600;
-        font-size: 1.1rem;
-        text-shadow: 0 1px 3px rgba(0,0,0,0.3);
-        z-index: 1;
-    }
-
-        .legenda-container {
+    .legenda-container {
         display: flex;
         justify-content: center;
         gap: 20px;
@@ -438,7 +430,7 @@
         align-items: center;
         gap: 8px;
     }
-
+    
     .legenda-icone {
         width: 20px;
         height: 20px;
@@ -446,7 +438,7 @@
         background-repeat: no-repeat;
         background-position: center;
     }
-
+    
     .legenda-icone.concluido {
         background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 50 50' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M25 0L30.9 18.1H49.5L34.3 29.3L40.2 47.4L25 36.2L9.8 47.4L15.7 29.3L0.5 18.1H19.1L25 0Z' fill='%2370CF97'/%3E%3C/svg%3E");
     }
@@ -454,7 +446,7 @@
     .legenda-icone.concluido-com-unica-tentativa {
         background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 50 50' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M25 0L30.9 18.1H49.5L34.3 29.3L40.2 47.4L25 36.2L9.8 47.4L15.7 29.3L0.5 18.1H19.1L25 0Z' fill='%2366F0CE'/%3E%3C/svg%3E");
     }
-
+    
     .legenda-icone.incompleto {
         background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 50 50' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M25 0L30.9 18.1H49.5L34.3 29.3L40.2 47.4L25 36.2L9.8 47.4L15.7 29.3L0.5 18.1H19.1L25 0Z' fill='%23F8B4B4'/%3E%3C/svg%3E");
     }
@@ -463,33 +455,14 @@
         color: #5B5C65;
         font-size: 0.9rem;
     }
-
+    
     @media (max-width: 768px) {
-        .app-header {
-            padding: 1rem;
-        }
-
-        .nav-options {
-            gap: 1rem;
-        }
-
         .stats-container {
             flex-direction: column;
             gap: 1.5rem;
         }
-
         .main-container {
             padding: 1rem;
-        }
-
-        .jogos-grid {
-            grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
-        }
-
-        .legenda-container {
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
         }
     }
 </style>

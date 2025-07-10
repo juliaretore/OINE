@@ -325,6 +325,7 @@
     }
 
     .container {
+        min-width: 100vw;
         position: relative;
         width: 100%;
         margin: 0 auto;
